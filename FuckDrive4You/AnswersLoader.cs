@@ -60,10 +60,12 @@ namespace FuckDrive4You
 
             string url = "https://undervisning.drive4you.dk/ElevProveResult/MyElevProveResultFromStat?ID=" + ResultID;
 
-            using (WebClient wc = new WebClient())
+            try
             {
+                WebClient wc = new WebClient();
+                wc.Headers.Add("user-agent", "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5355d Safari/8536.25");
                 string html = wc.DownloadString(url);
-                string[] answerids = html.Split(new[] { "onclick=\"getUrl('elevproveresultitem/elevproveresultitem?id="}, StringSplitOptions.None);
+                string[] answerids = html.Split(new[] { "onclick=\"getUrl('elevproveresultitem/elevproveresultitem?id=" }, StringSplitOptions.None);
                 int i = 1;
                 foreach (string id in answerids)
                 {
@@ -98,6 +100,11 @@ namespace FuckDrive4You
                     catch { }
                 }
             }
+            catch (Exception ex)
+            {
+                ConsoleExtensions.WriteLine(ex.ToString(), ConsoleColor.Red);
+            }
+           
             return true;
         }
     }
