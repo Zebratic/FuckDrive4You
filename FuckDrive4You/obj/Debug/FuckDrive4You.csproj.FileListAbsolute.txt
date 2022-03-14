@@ -1,0 +1,10 @@
+D:\Work\FuckDrive4You\FuckDrive4You\obj\Debug\FuckDrive4You.csproj.AssemblyReference.cache
+D:\Work\FuckDrive4You\FuckDrive4You\obj\Debug\FuckDrive4You.csproj.SuggestedBindingRedirects.cache
+D:\Work\FuckDrive4You\FuckDrive4You\obj\Debug\FuckDrive4You.csproj.CoreCompileInputs.cache
+D:\Work\FuckDrive4You\FuckDrive4You\bin\Debug\FuckDrive4You.exe.config
+D:\Work\FuckDrive4You\FuckDrive4You\bin\Debug\FuckDrive4You.exe
+D:\Work\FuckDrive4You\FuckDrive4You\bin\Debug\FuckDrive4You.pdb
+D:\Work\FuckDrive4You\FuckDrive4You\bin\Debug\WebDriver.dll
+D:\Work\FuckDrive4You\FuckDrive4You\obj\Debug\FuckDrive4You.csproj.CopyComplete
+D:\Work\FuckDrive4You\FuckDrive4You\obj\Debug\FuckDrive4You.exe
+D:\Work\FuckDrive4You\FuckDrive4You\obj\Debug\FuckDrive4You.pdb
