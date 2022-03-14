@@ -64,7 +64,9 @@ namespace FuckDrive4You
             {
                 WebClient wc = new WebClient();
                 wc.Headers.Add("user-agent", "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5355d Safari/8536.25");
+                // we cant do webclient, we need to open new tab to dump
                 string html = wc.DownloadString(url);
+                Console.WriteLine(html);
                 string[] answerids = html.Split(new[] { "onclick=\"getUrl('elevproveresultitem/elevproveresultitem?id=" }, StringSplitOptions.None);
                 int i = 1;
                 foreach (string id in answerids)
