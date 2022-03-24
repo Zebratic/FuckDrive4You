@@ -8,6 +8,10 @@ namespace FuckDrive4You
 {
     public class Settings
     {
+        public static int MinFails = 0;
+        public static int MaxFails = 3;
 
+        public static int MinMinutesSpent = 5;
+        public static int MaxMinutesSpent = 10;
     }
 }

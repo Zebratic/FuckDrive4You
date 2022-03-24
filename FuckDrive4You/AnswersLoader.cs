@@ -1,60 +1,21 @@
-﻿using System;
+﻿using OpenQA.Selenium;
+using OpenQA.Selenium.Support.UI;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace FuckDrive4You
 {
     public class AnswersLoader
     {
-        public static string answerspath = Environment.CurrentDirectory + @"\answers";
         public static List<Answer> LoadedAnswers = new List<Answer>();
 
-        public static void Setup()
-        {
-            if (!Directory.Exists(answerspath))
-                Directory.CreateDirectory(answerspath);
-        }
-
-        public static bool LoadAnswersFromID(string id)
-        {
-            if (!File.Exists($"{answerspath}\\{id}.txt"))
-            {
-                ConsoleExtensions.WriteLine($"{answerspath}\\{id}.txt is missing!!!", ConsoleColor.Red);
-                return false;
-            }
-
-            string content = File.ReadAllText($"{answerspath}\\{id}.txt");
-            foreach (string line in content.Split('\n'))
-            {
-                try
-                {
-                    int nr = Convert.ToInt32(line.Split(':')[0]);
-                    Answer answer = new Answer(nr);
-
-                    string ksvars = line.Split(':')[1];
-                    try { answer.ksvar1 = Convert.ToInt32(ksvars.Substring(0, 1)); } catch { }
-                    try { answer.ksvar2 = Convert.ToInt32(ksvars.Substring(1, 1)); } catch { }
-                    try { answer.ksvar3 = Convert.ToInt32(ksvars.Substring(2, 1)); } catch { }
-                    try { answer.ksvar4 = Convert.ToInt32(ksvars.Substring(3, 1)); } catch { }
-
-                    LoadedAnswers.Add(answer);
-                }
-                catch
-                {
-                    ConsoleExtensions.WriteLine($"line: '{line}' <- is wrongly formatted!!!", ConsoleColor.Red);
-                }
-            }
-
-            return true;
-        }
-
-        public static Answer GetAnswer(int nr) => LoadedAnswers.Find(x => x.nr == nr);
-
-        public static bool DumpAnswers(int ResultID)
+        public static bool DumpAnswers(IWebDriver driver, int ResultID)
         {
             LoadedAnswers.Clear();
 
@@ -62,42 +23,53 @@ namespace FuckDrive4You
 
             try
             {
-                WebClient wc = new WebClient();
-                wc.Headers.Add("user-agent", "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5355d Safari/8536.25");
+                TimeSpan waittime = driver.Manage().Timeouts().ImplicitWait;
+
                 // we cant do webclient, we need to open new tab to dump
-                string html = wc.DownloadString(url);
-                Console.WriteLine(html);
-                string[] answerids = html.Split(new[] { "onclick=\"getUrl('elevproveresultitem/elevproveresultitem?id=" }, StringSplitOptions.None);
+                ((IJavaScriptExecutor)driver).ExecuteScript("window.open();");
+                driver.SwitchTo().Window(driver.WindowHandles.Last());
+                driver.Navigate().GoToUrl(url);
+
+                try { new WebDriverWait(driver, waittime).Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").Equals("complete")); } catch { Thread.Sleep(5000); }
+
+                string[] answerids = driver.PageSource.Split(new[] { "onclick=\"getUrl('elevproveresultitem/elevproveresultitem?id=" }, StringSplitOptions.None);
                 int i = 1;
-                foreach (string id in answerids)
+                foreach (string question in answerids)
                 {
                     try
                     {
-                        Answer answer = new Answer(i);
-
-                        string answerhtml = wc.DownloadString("https://undervisning.drive4you.dk/ElevProveResult/MyElevProveResultFromStat?ID=" + id);
-                        string[] answers = answerhtml.Split(new[] { "Korrekt svar : " }, StringSplitOptions.None);
-                        int ii = 1;
-                        foreach (string questionanswer in answers)
+                        string id = question.Split(new[] { "')\">" }, StringSplitOptions.None)[0];
+                        if (IsDigitsOnly(id))
                         {
-                            try
+                            Answer answer = new Answer(i);
+                            driver.Navigate().GoToUrl("https://undervisning.drive4you.dk/elevproveresultitem/elevproveresultitem?id=" + id);
+
+                            try { new WebDriverWait(driver, waittime).Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").Equals("complete")); } catch { Thread.Sleep(5000); }
+
+                            string[] answers = driver.PageSource.Split(new[] { "Korrekt svar : " }, StringSplitOptions.None);
+                            int ii = 0;
+                            foreach (string questionanswer in answers)
                             {
-                                string ksvar = questionanswer.Split(new[] { ". Du svarede ikke</b></td>" }, StringSplitOptions.None)[0];
-                                switch (ii)
+                                try
                                 {
-                                    case 1: answer.ksvar1 = ksvar == "Ja" ? 1 : 0; break;
-                                    case 2: answer.ksvar2 = ksvar == "Ja" ? 1 : 0; break;
-                                    case 3: answer.ksvar3 = ksvar == "Ja" ? 1 : 0; break;
-                                    case 4: answer.ksvar4 = ksvar == "Ja" ? 1 : 0; break;
+                                    string ksvar = questionanswer.Split(new[] { ". Du svarede" }, StringSplitOptions.None)[0];
+                                    switch (ii)
+                                    {
+                                        case 1: answer.ksvar1 = ksvar == "Ja" ? 1 : 0; Console.WriteLine("ksvar1 = " + ksvar); break;
+                                        case 2: answer.ksvar2 = ksvar == "Ja" ? 1 : 0; Console.WriteLine("ksvar2 = " + ksvar); break;
+                                        case 3: answer.ksvar3 = ksvar == "Ja" ? 1 : 0; Console.WriteLine("ksvar3 = " + ksvar); break;
+                                        case 4: answer.ksvar4 = ksvar == "Ja" ? 1 : 0; Console.WriteLine("ksvar4 = " + ksvar); break;
+                                    }
+                                    ii++;
+
                                 }
-                                ii++;
-
+                                catch { }
                             }
-                            catch { }
-                        }
+                            Console.WriteLine("------------");
 
-                        LoadedAnswers.Add(answer);
-                        i++;
+                            LoadedAnswers.Add(answer);
+                            i++;
+                        }
                     }
                     catch { }
                 }
@@ -106,7 +78,20 @@ namespace FuckDrive4You
             {
                 ConsoleExtensions.WriteLine(ex.ToString(), ConsoleColor.Red);
             }
-           
+
+            driver.SwitchTo().Window(driver.WindowHandles.First());
+
+            return true;
+        }
+
+        public static bool IsDigitsOnly(string str)
+        {
+            foreach (char c in str)
+            {
+                if (c < '0' || c > '9')
+                    return false;
+            }
+
             return true;
         }
     }
